@@ -1,4 +1,8 @@
+
 /bin
+*.apk
+/*/*.dex
+/.bin
 /gen
 /obj
 /libs/*/*.so
