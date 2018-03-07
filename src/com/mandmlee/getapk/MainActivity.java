@@ -28,10 +28,13 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.xl.game.tool.CopyFile;
+import java.io.File;
+import com.xl.game.tool.FileUtils;
 
 @SuppressLint("NewApi")
 public class MainActivity extends Activity implements OnItemClickListener,
-		MultiChoiceModeListener {
+MultiChoiceModeListener {
 
 	private static final String TAG = "MainActivity";
 	private GridView mAppGridView;
@@ -42,40 +45,40 @@ public class MainActivity extends Activity implements OnItemClickListener,
 	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		pm = getPackageManager();
-		mAppGridView = (GridView) findViewById(R.id.appGridView);
-		initApp();
-		adapter = new MyAdapter(this, mApps);
-		mAppGridView.setAdapter(adapter);
-		mAppGridView.setOnItemClickListener(this);
-		// ÉÏÏÂÎÄ²Ëµ¥
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			// Èç¹ûAPI>=11Ñ¡Ôñ²Ù×÷Ä£Ê½
-			mAppGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
-			mAppGridView.setMultiChoiceModeListener(this);
-		}
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_main);
+	pm = getPackageManager();
+	mAppGridView = (GridView) findViewById(R.id.appGridView);
+	initApp();
+	adapter = new MyAdapter(this, mApps);
+	mAppGridView.setAdapter(adapter);
+	mAppGridView.setOnItemClickListener(this);
+	// ä¸Šä¸‹æ–‡èœå•
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+	// å¦‚æœAPI>=11é€‰æ‹©æ“ä½œæ¨¡å¼
+	mAppGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+	mAppGridView.setMultiChoiceModeListener(this);
+	}
 
 	}
 
 	/**
-	 * ³õÊ¼»¯appÁĞ±í
+	 * åˆå§‹åŒ–appåˆ—è¡¨
 	 */
 	private void initApp() {
-		// »ñÈ¡androidÉè±¸µÄÓ¦ÓÃÁĞ±í
-		Intent intent = new Intent(Intent.ACTION_MAIN); // ¶¯×÷Æ¥Åä
-		intent.addCategory(Intent.CATEGORY_LAUNCHER); // Àà±ğÆ¥Åä
-		mApps = (ArrayList<ResolveInfo>) pm.queryIntentActivities(intent, 0);
-		// ÅÅĞò
-		Collections.sort(mApps, new Comparator<ResolveInfo>() {
+	// è·å–androidè®¾å¤‡çš„åº”ç”¨åˆ—è¡¨
+	Intent intent = new Intent(Intent.ACTION_MAIN); // åŠ¨ä½œåŒ¹é…
+	intent.addCategory(Intent.CATEGORY_LAUNCHER); // ç±»åˆ«åŒ¹é…
+	mApps = (ArrayList<ResolveInfo>) pm.queryIntentActivities(intent, 0);
+	// æ’åº
+	Collections.sort(mApps, new Comparator<ResolveInfo>() {
 
 			@Override
 			public int compare(ResolveInfo a, ResolveInfo b) {
-				// ÅÅĞò¹æÔò
-				PackageManager pm = getPackageManager();
-				return String.CASE_INSENSITIVE_ORDER.compare(a.loadLabel(pm)
-						.toString(), b.loadLabel(pm).toString()); // ºöÂÔ´óĞ¡Ğ´
+			// æ’åºè§„åˆ™
+			PackageManager pm = getPackageManager();
+			return String.CASE_INSENSITIVE_ORDER.compare(a.loadLabel(pm)
+																									 .toString(), b.loadLabel(pm).toString()); // å¿½ç•¥å¤§å°å†™
 			}
 		});
 
@@ -84,31 +87,31 @@ public class MainActivity extends Activity implements OnItemClickListener,
 	private class MyAdapter extends ArrayAdapter<ResolveInfo> {
 
 		public MyAdapter(Context context, ArrayList<ResolveInfo> apps) {
-			super(context, 0, apps);
+		super(context, 0, apps);
 		}
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			ViewHolder holder;
-			if (convertView == null) {
+		ViewHolder holder;
+		if (convertView == null) {
 
-				convertView = getLayoutInflater().inflate(
-						R.layout.item_gridview, null);
-				holder = new ViewHolder();
-				holder.appImageView = (ImageView) convertView
-						.findViewById(R.id.appImageView);
-				holder.appNameTextView = (TextView) convertView
-						.findViewById(R.id.appNameTextView);
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
-			ResolveInfo app = mApps.get(position);
-			CharSequence appName = app.loadLabel(pm);
-			holder.appNameTextView.setText(appName);
-			Drawable appIcon = app.loadIcon(pm);
-			holder.appImageView.setImageDrawable(appIcon);
-			return convertView;
+		convertView = getLayoutInflater().inflate(
+			R.layout.item_gridview, null);
+		holder = new ViewHolder();
+		holder.appImageView = (ImageView) convertView
+			.findViewById(R.id.appImageView);
+		holder.appNameTextView = (TextView) convertView
+			.findViewById(R.id.appNameTextView);
+		convertView.setTag(holder);
+		} else {
+		holder = (ViewHolder) convertView.getTag();
+		}
+		ResolveInfo app = mApps.get(position);
+		CharSequence appName = app.loadLabel(pm);
+		holder.appNameTextView.setText(appName);
+		Drawable appIcon = app.loadIcon(pm);
+		holder.appImageView.setImageDrawable(appIcon);
+		return convertView;
 		}
 
 		private class ViewHolder {
@@ -120,76 +123,87 @@ public class MainActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
-			long id) {
-		ResolveInfo app = mApps.get(position);
-		String appDir = null;
-		try {
-			// Ö¸¶¨°üÃûµÄ³ÌĞòÔ´ÎÄ¼şÂ·¾¶
-			appDir = getPackageManager().getApplicationInfo(
-					app.activityInfo.packageName, 0).sourceDir;
-		} catch (NameNotFoundException e) {
-			e.printStackTrace();
-		}
-		appDir = "file://" + appDir;
-		Uri uri = Uri.parse(appDir);
-		// ·¢ËÍ
-		Intent intent = new Intent(Intent.ACTION_SEND);
-		intent.putExtra(Intent.EXTRA_STREAM, uri);
-		intent.setType("*/*");
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		startActivity(Intent.createChooser(intent, "·¢ËÍ"));
+													long id) {
+	ResolveInfo app = mApps.get(position);
+	String appDir = null;
+	try {
+	// æŒ‡å®šåŒ…åçš„ç¨‹åºæºæ–‡ä»¶è·¯å¾„
+	appDir = getPackageManager().getApplicationInfo(
+		app.activityInfo.packageName, 0).sourceDir;
+	} catch (NameNotFoundException e) {
+	e.printStackTrace();
+	}
+	//ResolveInfo app = mApps.get(position);
+	CharSequence appName = app.loadLabel(pm);
+	File dir = new File(FileUtils.getSDPath()+File.separatorChar+"DownLoad"+File.separatorChar+appName+".apk");
+	 CopyFile.copyFile(appDir,dir.getPath());
+	 share(dir.getPath());
+	}
+	
+	//å‘é€æ–‡ä»¶
+	public void share(String appDir)
+	{
+	appDir = "file://" + appDir;
+	Uri uri = Uri.parse(appDir);
+	// å‘é€
+	Intent intent = new Intent(Intent.ACTION_SEND);
+	intent.putExtra(Intent.EXTRA_STREAM, uri);
+	intent.setType("*/*");
+	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	startActivity(Intent.createChooser(intent, "å‘é€"));
+	
 	}
 
 	@SuppressLint("NewApi")
 	@Override
 	public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-		mode.getMenuInflater().inflate(R.menu.list_item_context, menu);
-		return true;
+	mode.getMenuInflater().inflate(R.menu.list_item_context, menu);
+	return true;
 	}
 
 	@Override
 	public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-		return false;
+	return false;
 	}
 
 	@Override
 	public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_item_send:
-			ArrayList<Uri> uris = new ArrayList<Uri>(); // uriÁĞ±í
-			for (int i = adapter.getCount() - 1; i >= 0; i--) {
-				if (mAppGridView.isItemChecked(i)) {
-					ResolveInfo app = mApps.get(i);
-					String appDir = null;
-					try {
-						// Ö¸¶¨°üÃûµÄ³ÌĞòÔ´ÎÄ¼şÂ·¾¶
-						appDir = getPackageManager().getApplicationInfo(
-								app.activityInfo.packageName, 0).sourceDir;
-					} catch (NameNotFoundException e) {
-						e.printStackTrace();
-					}
-					appDir = "file://" + appDir;
-					Uri uri = Uri.parse(appDir);
-					uris.add(uri);
-				}
-			}
-
-			boolean multiple = uris.size() > 1;
-			Intent intent = new Intent(multiple ? Intent.ACTION_SEND_MULTIPLE
-					: Intent.ACTION_SEND);
-			intent.setType("*/*");
-			if (multiple) {
-				intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-			} else {
-				intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
-			}
-			startActivity(Intent.createChooser(intent, "·¢ËÍ"));
-			mode.finish();
-			return true;
-
-		default:
-			return false;
+	switch (item.getItemId()) {
+	case R.id.menu_item_send:
+		ArrayList<Uri> uris = new ArrayList<Uri>(); // uriåˆ—è¡¨
+		for (int i = adapter.getCount() - 1; i >= 0; i--) {
+		if (mAppGridView.isItemChecked(i)) {
+		ResolveInfo app = mApps.get(i);
+		String appDir = null;
+		try {
+		// æŒ‡å®šåŒ…åçš„ç¨‹åºæºæ–‡ä»¶è·¯å¾„
+		appDir = getPackageManager().getApplicationInfo(
+			app.activityInfo.packageName, 0).sourceDir;
+		} catch (NameNotFoundException e) {
+		e.printStackTrace();
 		}
+		appDir = "file://" + appDir;
+		Uri uri = Uri.parse(appDir);
+		uris.add(uri);
+		}
+		}
+
+		boolean multiple = uris.size() > 1;
+		Intent intent = new Intent(multiple ? Intent.ACTION_SEND_MULTIPLE
+															 : Intent.ACTION_SEND);
+		intent.setType("*/*");
+		if (multiple) {
+		intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+		} else {
+		intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+		}
+		startActivity(Intent.createChooser(intent, "å‘é€"));
+		mode.finish();
+		return true;
+
+	default:
+		return false;
+	}
 	}
 
 	@Override
@@ -199,7 +213,8 @@ public class MainActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onItemCheckedStateChanged(ActionMode mode, int position,
-			long id, boolean checked) {
+																				long id, boolean checked) {
 
 	}
 }
+
